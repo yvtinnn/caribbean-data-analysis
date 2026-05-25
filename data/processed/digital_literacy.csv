@@ -1,0 +1,18 @@
+country,digital_literacy_score,ict_education_access,stem_graduates_pct,cybersecurity_workforce_per_100k,cyber_hygiene_score,online_safety_awareness,tech_adoption_index
+Jamaica,61.2,68.5,19.5,15.2,55.2,52.5,58.5
+Trinidad and Tobago,74.5,80.2,23.5,28.5,68.5,65.2,72.5
+Barbados,80.2,87.5,26.2,35.2,72.8,70.5,78.2
+Dominican Republic,64.8,63.5,21.2,18.2,58.2,55.8,62.5
+Haiti,30.5,28.2,11.2,4.2,25.5,22.5,28.5
+Bahamas,82.5,90.5,29.5,38.5,75.2,72.5,80.5
+Guyana,55.2,58.5,16.5,10.5,48.5,45.2,52.5
+Saint Lucia,68.5,73.2,21.5,21.2,62.5,58.5,65.5
+Grenada,63.2,65.5,19.2,18.2,58.2,55.2,60.5
+Antigua and Barbuda,70.5,77.5,25.2,25.5,65.5,62.5,68.5
+Saint Vincent and the Grenadines,58.2,61.2,17.2,12.5,52.5,50.2,55.5
+Dominica,61.5,63.5,18.5,14.5,55.2,52.5,58.2
+Saint Kitts and Nevis,72.8,82.5,27.2,30.5,68.5,65.5,72.5
+Belize,51.2,53.5,15.5,9.2,45.5,42.5,48.5
+Suriname,58.5,58.2,17.2,12.5,52.5,50.2,55.5
+Cuba,53.2,48.5,13.5,10.2,48.2,45.5,50.5
+Puerto Rico,77.5,84.5,31.2,42.5,70.5,68.2,75.5
