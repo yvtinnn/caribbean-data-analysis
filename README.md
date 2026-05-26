@@ -29,26 +29,28 @@ This project collects, analyzes, and visualizes public data on cyberattacks, int
 
 ```
 caribbean-cyber-analysis/
+├── config.yaml                 # Data configuration & weights
 ├── data/
-│   ├── raw/                    # Raw data (if any)
 │   └── processed/              # Processed CSV datasets
 │       ├── internet_penetration.csv
 │       ├── digital_literacy.csv
 │       ├── cyberattacks.csv
 │       ├── attack_trends.csv
+│       ├── attack_forecast.csv  # ML-forecasted trends (2025-2027)
 │       ├── policy_framework.csv
 │       └── risk_index.csv
 ├── scripts/
-│   ├── 01_data_collection.py   # Data collection & risk calculation
-│   ├── 02_visualizations.py    # Chart generation
+│   ├── 01_data_collection.py   # Data collection, risk calc & forecasting
+│   ├── 02_visualizations.py    # Chart generation (static + interactive)
 │   └── 03_report_generator.py  # PDF report generation
-├── visualizations/             # Output PNG charts
+├── visualizations/             # Output charts
 │   ├── 01_internet_penetration.png
 │   ├── 02_digital_literacy.png
 │   ├── 03_cyberattacks.png
 │   ├── 04_attack_trends.png
 │   ├── 05_risk_assessment.png
-│   └── 06_jamaica_dashboard.png
+│   ├── 06_jamaica_dashboard.png
+│   └── 07_risk_choropleth_map.html  # Interactive map (Plotly)
 ├── report/                     # Output PDF report
 │   └── Caribbean_Cybersecurity_Risk_Assessment_Jamaica.pdf
 ├── requirements.txt            # Python dependencies
@@ -78,6 +80,8 @@ pip install -r requirements.txt
 - seaborn >= 0.12.0
 - fpdf2 >= 2.7.0
 - lxml >= 4.9.0
+- plotly >= 5.18.0 (interactive maps)
+- scikit-learn >= 1.3.0 (attack forecasting)
 
 ## Usage
 
@@ -88,8 +92,8 @@ pip install -r requirements.txt
 python run_analysis.py
 
 # Option 2: Run scripts individually
-python scripts/01_data_collection.py    # Collect data & calculate risk
-python scripts/02_visualizations.py     # Generate charts
+python scripts/01_data_collection.py    # Collect data, calculate risk & forecast
+python scripts/02_visualizations.py     # Generate charts (static + interactive)
 python scripts/03_report_generator.py   # Create PDF report
 ```
 
@@ -235,13 +239,18 @@ The project generates 6 professional charts:
 *Figure 3: Cyberattack statistics by type and target sector*
 
 ![Attack Trends](./visualizations/04_attack_trends.png)
-*Figure 4: Historical cyberattack trends (2020-2024)*
+*Figure 4: Historical cyberattack trends (2020-2024) with forecast (dashed lines)*
 
 ![Risk Assessment](./visualizations/05_risk_assessment.png)
 *Figure 5: Composite cybersecurity risk index*
 
 ![Jamaica Dashboard](./visualizations/06_jamaica_dashboard.png)
 *Figure 6: Jamaica cybersecurity risk dashboard*
+
+### Interactive Visualizations
+
+![Risk Choropleth Map](./visualizations/07_risk_choropleth_map.html)
+*Figure 7: Interactive Caribbean cybersecurity risk map (Plotly - open in browser)*
 
 ---
 

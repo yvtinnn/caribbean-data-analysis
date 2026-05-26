@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Set style for professional reports
-plt.style.use('seaborn-v0_8-whitegrid')
+plt.style.use('seaborn-whitegrid')
 sns.set_palette("viridis")
 
 # Custom colors for consistency
@@ -199,26 +199,39 @@ def create_cyberattack_chart(df_attacks, output_dir):
     print("  Created: 03_cyberattacks.png")
 
 
-def create_attack_trends_chart(df_trends, output_dir):
-    """Create attack trends over time"""
+def create_attack_trends_chart(df_trends, output_dir, df_forecast=None):
+    """Create attack trends over time (with optional forecast)"""
     fig, ax = plt.subplots(figsize=(14, 8))
-    
+
     countries = [col for col in df_trends.columns if col != 'year']
-    colors_list = [COLORS['jamaica'], COLORS['primary'], COLORS['secondary'], 
+    colors_list = [COLORS['jamaica'], COLORS['primary'], COLORS['secondary'],
                    COLORS['tertiary'], COLORS['quaternary'], COLORS['high_risk'], COLORS['medium_risk']]
-    
+
     for i, country in enumerate(countries):
         color = colors_list[i % len(colors_list)]
         linewidth = 3 if country == 'Jamaica' else 2
-        ax.plot(df_trends['year'], df_trends[country], marker='o', label=country.replace('_', ' '), 
+        ax.plot(df_trends['year'], df_trends[country], marker='o', label=country.replace('_', ' '),
                color=color, linewidth=linewidth)
-    
+
+        # Add forecast if available
+        if df_forecast is not None and country in df_forecast.columns:
+            forecast_years = df_forecast['year'].values
+            forecast_values = df_forecast[country].values
+            ax.plot(forecast_years, forecast_values, linestyle='--', marker='s',
+                   color=color, linewidth=1.5, alpha=0.6)
+
     ax.set_xlabel('Year', fontsize=12)
     ax.set_ylabel('Number of Cyberattacks', fontsize=12)
-    ax.set_title('Cyberattack Trends (2020-2024)', fontsize=16, fontweight='bold')
+    ax.set_title('Cyberattack Trends (2020-2024) with Forecast (2025-2027)', fontsize=16, fontweight='bold')
     ax.legend(loc='upper left', fontsize=10)
     ax.grid(True, alpha=0.3)
-    
+
+    # Add vertical line at forecast boundary
+    if df_forecast is not None:
+        last_historical = df_trends['year'].max()
+        ax.axvline(x=last_historical + 0.5, color='gray', linestyle=':', alpha=0.7)
+        ax.text(last_historical + 0.7, ax.get_ylim()[1] * 0.95, 'Forecast →', fontsize=9, color='gray')
+
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, '04_attack_trends.png'), dpi=300, bbox_inches='tight')
     plt.close()
@@ -446,34 +459,157 @@ def create_jamaica_dashboard(df_internet, df_literacy, df_attacks, df_risk, outp
     print("  Created: 06_jamaica_dashboard.png")
 
 
+def create_choropleth_map(df_risk, output_dir):
+    """Create interactive choropleth map of Caribbean cybersecurity risk"""
+    import plotly.express as px
+    import plotly.graph_objects as go
+
+    # Country name to ISO alpha-3 mapping for Caribbean nations
+    country_iso = {
+        'Jamaica': 'JAM',
+        'Trinidad and Tobago': 'TTO',
+        'Barbados': 'BRB',
+        'Dominican Republic': 'DOM',
+        'Haiti': 'HTI',
+        'Bahamas': 'BHS',
+        'Guyana': 'GUY',
+        'Saint Lucia': 'LCA',
+        'Grenada': 'GRD',
+        'Antigua and Barbuda': 'ATG',
+        'Saint Vincent and the Grenadines': 'VCT',
+        'Dominica': 'DMA',
+        'Saint Kitts and Nevis': 'KNA',
+        'Belize': 'BLZ',
+        'Suriname': 'SUR',
+        'Cuba': 'CUB',
+        'Puerto Rico': 'PRI'
+    }
+
+    df_map = df_risk.copy()
+    df_map['iso_alpha'] = df_map['country'].map(country_iso)
+
+    # Color scale based on risk level
+    color_scale = [
+        [0, '#388E3C'],      # Low - green
+        [0.25, '#F57C00'],   # Medium-Low - orange
+        [0.5, '#F57C00'],    # Medium - orange
+        [0.75, '#D32F2F'],   # High - red
+        [1, '#B71C1C']       # Critical - dark red
+    ]
+
+    fig = px.choropleth(
+        df_map,
+        locations='iso_alpha',
+        color='risk_index',
+        hover_name='country',
+        hover_data={
+            'risk_index': ':.2f',
+            'risk_level': True,
+            'attack_growth_rate': ':+.1f',
+            'exposure_score': ':.2f',
+            'vulnerability_score': ':.2f',
+            'threat_score': ':.2f'
+        },
+        color_continuous_scale=color_scale,
+        range_color=[0, 10],
+        title='Caribbean Cybersecurity Risk Index (2024)',
+        labels={
+            'risk_index': 'Risk Index',
+            'attack_growth_rate': 'Attack Growth %',
+            'exposure_score': 'Exposure',
+            'vulnerability_score': 'Vulnerability',
+            'threat_score': 'Threat'
+        }
+    )
+
+    fig.update_geos(
+        showcountries=True,
+        showcoastlines=True,
+        coastlinecolor='black',
+        showland=True,
+        landcolor='lightgray',
+        scope='central america',
+        projection_type='natural earth'
+    )
+
+    fig.update_layout(
+        title_font_size=18,
+        title_x=0.5,
+        geo=dict(
+            bgcolor='white',
+            lakecolor='lightblue',
+            showlakes=True,
+            showframe=False
+        ),
+        coloraxis_colorbar=dict(
+            title='Risk Index (0-10)',
+            tickvals=[0, 2.5, 5, 7.5, 10],
+            ticktext=['Low', 'Medium-Low', 'Medium', 'High', 'Critical']
+        ),
+        width=1000,
+        height=600
+    )
+
+    # Add Jamaica annotation
+    jamaica_idx = df_map[df_map['country'] == 'Jamaica'].index[0]
+    jamaica_risk = df_map.loc[jamaica_idx, 'risk_index']
+    fig.add_annotation(
+        x=0.55,
+        y=0.65,
+        xref='paper',
+        yref='paper',
+        text=f"Jamaica<br>Risk: {jamaica_risk:.2f}",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        ax=40,
+        ay=-30,
+        font=dict(size=12, color='#009B3A')
+    )
+
+    output_path = os.path.join(output_dir, '07_risk_choropleth_map.html')
+    fig.write_html(output_path)
+    print("  Created: 07_risk_choropleth_map.html")
+    return output_path
+
+
 def create_all_visualizations(data_dir=None):
     """Main function to create all visualizations"""
     print("\n" + "=" * 70)
     print("  GENERATING VISUALIZATIONS")
     print("=" * 70)
-    
+
     # Load data
     if data_dir is None:
         data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
-    
+
     df_internet = pd.read_csv(os.path.join(data_dir, 'internet_penetration.csv'))
     df_literacy = pd.read_csv(os.path.join(data_dir, 'digital_literacy.csv'))
     df_attacks = pd.read_csv(os.path.join(data_dir, 'cyberattacks.csv'))
     df_trends = pd.read_csv(os.path.join(data_dir, 'attack_trends.csv'))
     df_risk = pd.read_csv(os.path.join(data_dir, 'risk_index.csv'))
-    
+
+    # Load forecast data if available
+    df_forecast = None
+    forecast_path = os.path.join(data_dir, 'attack_forecast.csv')
+    if os.path.exists(forecast_path):
+        df_forecast = pd.read_csv(forecast_path)
+        print(f"  Loaded forecast data: {forecast_path}")
+
     # Create output directory for visualizations
     viz_output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'visualizations')
     os.makedirs(viz_output_dir, exist_ok=True)
-    
+
     # Generate all charts
     create_internet_penetration_chart(df_internet, viz_output_dir)
     create_digital_literacy_chart(df_literacy, viz_output_dir)
     create_cyberattack_chart(df_attacks, viz_output_dir)
-    create_attack_trends_chart(df_trends, viz_output_dir)
+    create_attack_trends_chart(df_trends, viz_output_dir, df_forecast)
     create_risk_index_chart(df_risk, viz_output_dir)
     create_jamaica_dashboard(df_internet, df_literacy, df_attacks, df_risk, viz_output_dir)
-    
+    create_choropleth_map(df_risk, viz_output_dir)
+
     print(f"\n  All visualizations saved to: {viz_output_dir}")
     return viz_output_dir
 

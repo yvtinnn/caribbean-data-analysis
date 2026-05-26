@@ -1,0 +1,43 @@
+# Caribbean Cybersecurity Analysis Configuration
+# Update this file when refreshing data
+
+data_year: 2024
+update_frequency: annually
+
+# Countries covered in analysis
+countries:
+  - Jamaica
+  - Trinidad and Tobago
+  - Barbados
+  - Dominican Republic
+  - Haiti
+  - Bahamas
+  - Guyana
+  - Saint Lucia
+  - Grenada
+  - Antigua and Barbuda
+  - Saint Vincent and the Grenadines
+  - Dominica
+  - Saint Kitts and Nevis
+  - Belize
+  - Suriname
+  - Cuba
+  - Puerto Rico
+
+# Risk index weights (must sum to 1.0)
+risk_weights:
+  exposure: 0.20
+  vulnerability: 0.35
+  threat: 0.30
+  policy_gap: 0.15
+
+# Visualization settings
+visualization:
+  dpi: 300
+  style: seaborn-whitegrid
+  color_scheme: viridis
+
+# Forecasting settings
+forecasting:
+  years_ahead: 3  # Predict 2025-2027
+  model: linear_regression

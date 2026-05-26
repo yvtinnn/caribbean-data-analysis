@@ -223,37 +223,83 @@ def save_data(df_internet, df_literacy, df_attacks, df_trends, df_policy, df_ris
     """Save all datasets to CSV files"""
     output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
     os.makedirs(output_dir, exist_ok=True)
-    
+
     df_internet.to_csv(os.path.join(output_dir, 'internet_penetration.csv'), index=False)
     df_literacy.to_csv(os.path.join(output_dir, 'digital_literacy.csv'), index=False)
     df_attacks.to_csv(os.path.join(output_dir, 'cyberattacks.csv'), index=False)
     df_trends.to_csv(os.path.join(output_dir, 'attack_trends.csv'), index=False)
     df_policy.to_csv(os.path.join(output_dir, 'policy_framework.csv'), index=False)
     df_risk.to_csv(os.path.join(output_dir, 'risk_index.csv'), index=False)
-    
+
     print(f"\nData saved to {output_dir}")
     return output_dir
+
+
+def forecast_attack_trends(df_trends, years_ahead=3):
+    """
+    Forecast future attack trends using linear regression.
+    Uses 2020-2024 data to predict 2025-2027 trends.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    print(f"\n  Forecasting attacks {years_ahead} years ahead (2025-{2020+years_ahead+4})...")
+
+    countries = [col for col in df_trends.columns if col != 'year']
+    historical_years = df_trends['year'].values
+    forecast_years = np.arange(historical_years[-1] + 1, historical_years[-1] + years_ahead + 2)
+
+    forecast_results = {'year': forecast_years}
+
+    print("  Country forecasts:")
+    for country in countries:
+        country_clean = country.replace('_', ' ')
+        y = df_trends[country].values
+        X = historical_years.reshape(-1, 1)
+
+        model = LinearRegression()
+        model.fit(X, y)
+
+        y_pred = model.predict(forecast_years.reshape(-1, 1))
+        y_pred = np.maximum(y_pred, 0).round().astype(int)
+
+        forecast_results[country] = y_pred
+
+        # Calculate growth rate
+        total_growth = ((y_pred[-1] - y[-1]) / y[-1]) * 100 if y[-1] > 0 else 0
+        print(f"    {country_clean}: {y_pred[-1]:,} attacks by {forecast_years[-1]} (+{total_growth:.0f}% from 2024)")
+
+    df_forecast = pd.DataFrame(forecast_results)
+
+    # Save forecast
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
+    df_forecast.to_csv(os.path.join(output_dir, 'attack_forecast.csv'), index=False)
+    print(f"  Forecast data saved to attack_forecast.csv")
+
+    return df_forecast
 
 
 if __name__ == "__main__":
     print("=" * 70)
     print("  CARIBBEAN CYBERSECURITY DATA COLLECTION (2024 Update)")
     print("=" * 70)
-    
+
     # Try to fetch real-time data from World Bank
     wb_data = fetch_world_bank_indicators()
     if wb_data:
         print(f"  Retrieved {len(wb_data)} indicator categories from World Bank API")
-    
+
     # Compile comprehensive dataset
     df_internet, df_literacy, df_attacks, df_trends, df_policy = compile_caribbean_data()
-    
+
     # Calculate enhanced risk index
     df_risk = calculate_risk_index(df_internet, df_literacy, df_attacks, df_policy)
-    
+
     # Save data
     output_dir = save_data(df_internet, df_literacy, df_attacks, df_trends, df_policy, df_risk)
-    
+
+    # Forecast attack trends
+    df_forecast = forecast_attack_trends(df_trends, years_ahead=3)
+
     # Print summary
     print("\n" + "=" * 70)
     print("  DATA SUMMARY")
@@ -265,14 +311,14 @@ if __name__ == "__main__":
     print(f"  Total Cyberattacks (2024): {df_attacks['total_attacks_2024'].sum():,}")
     print(f"  Total Cyberattacks (2023): {df_attacks['total_attacks_2023'].sum():,}")
     print(f"  YoY Growth: {((df_attacks['total_attacks_2024'].sum() / df_attacks['total_attacks_2023'].sum()) - 1) * 100:.1f}%")
-    
+
     print("\n  RISK INDEX RANKINGS:")
     print("  " + "-" * 50)
     risk_summary = df_risk[['country', 'risk_index', 'risk_level', 'attack_growth_rate']].sort_values('risk_index', ascending=False)
     for _, row in risk_summary.iterrows():
         marker = " >>>" if row['country'] == 'Jamaica' else ""
         print(f"    {row['country']:<28} {row['risk_index']:.2f}  {row['risk_level']:<10} ({row['attack_growth_rate']:+.1f}%){marker}")
-    
+
     print(f"\n  JAMAICA RISK ASSESSMENT:")
     jamaica_risk = df_risk[df_risk['country'] == 'Jamaica'].iloc[0]
     jamaica_attacks = df_attacks[df_attacks['country'] == 'Jamaica'].iloc[0]
